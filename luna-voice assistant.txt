@@ -1,0 +1,218 @@
+import speech_recognition as sr
+import pyttsx3
+import pywhatkit
+import datetime
+import wikipedia
+import pyjokes
+import random
+import time
+from textblob import TextBlob
+from nltk.corpus import wordnet
+
+listener = sr.Recognizer()
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+
+exercise_log = {}
+water_log = []
+step_log = {}
+calorie_log = {}
+
+health_tips = [
+    "Remember to stay hydrated and take breaks during work.",
+    "Incorporate at least 30 minutes of physical activity into your daily routine.",
+    "Eat a balanced diet with plenty of fruits and vegetables.",
+    "Get at least 7-8 hours of sleep every night.",
+    "Practice mindfulness or meditation to reduce stress.",
+    "Avoid sugary drinks and opt for water instead.",
+    "Maintain good posture to prevent back and neck pain.",
+    "Wash your hands regularly to prevent the spread of germs.",
+    "Take short walks during your work breaks to stay active.",
+    "Limit screen time and take regular breaks to rest your eyes."
+]
+
+motivation_quotes = [
+    "Believe you can and you're halfway there.",
+    "Your limitation—it's only your imagination.",
+    "Push yourself, because no one else is going to do it for you.",
+    "Great things never come from comfort zones.",
+    "Dream it. Wish it. Do it.",
+    "Success doesn’t just find you. You have to go out and get it.",
+    "The harder you work for something, the greater you’ll feel when you achieve it.",
+    "Dream bigger. Do bigger.",
+    "Don’t stop when you’re tired. Stop when you’re done.",
+    "Wake up with determination. Go to bed with satisfaction."
+]
+
+fun_facts = [
+    "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still edible.",
+    "Bananas are berries, but strawberries aren't.",
+    "A single strand of Spaghetti is called a Spaghetto.",
+    "Avocados are berries, but raspberries aren't.",
+    "Octopuses have three hearts.",
+    "The Eiffel Tower can be 15 cm taller during the summer.",
+    "A day on Venus is longer than a year on Venus.",
+    "Humans share 50% of their DNA with bananas.",
+    "A bolt of lightning contains enough energy to toast 100,000 slices of bread.",
+    "A group of flamingos is called a 'flamboyance'."
+]
+
+stretching_exercises = [
+    "Try the neck stretch: Tilt your head towards your shoulder and hold for 10 seconds on each side.",
+    "Do a shoulder roll: Roll your shoulders forward and backward 10 times each.",
+    "Try the chest stretch: Stand with your feet shoulder-width apart, clasp your hands behind your back, and lift your arms while keeping your back straight.",
+    "Do a side stretch: Raise one arm over your head and lean to the opposite side. Hold for 10 seconds on each side.",
+    "Try the hamstring stretch: Sit on the ground with one leg extended and the other bent, reach towards your toes and hold for 10 seconds on each side."
+]
+
+def talk(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def take_command():
+    try:
+        with sr.Microphone() as source:
+            listener.adjust_for_ambient_noise(source)
+            print('listening...')
+            msg = "Hi, How can I help you?"
+            talk(msg)
+            voice = listener.listen(source)
+            command = listener.recognize_google(voice)
+            command = command.lower()
+            if 'luna' in command:
+                command = command.replace('luna', '').strip()
+                print(command)
+    except Exception as e:
+        print(f"Error: {e}")
+        command = ""
+    return command
+
+def log_exercise(activity, duration):
+    if activity in exercise_log:
+        exercise_log[activity] += duration
+    else:
+        exercise_log[activity] = duration
+    print(f"Exercise Log Updated: {exercise_log}")
+    talk(f'Logged {duration} minutes of {activity}.')
+
+def log_water():
+    current_time = datetime.datetime.now().strftime('%I:%M %p')
+    water_log.append(current_time)
+    print(f"Water Log Updated: {water_log}")
+    talk('Logged water intake at ' + current_time)
+
+def log_steps(steps):
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    if date in step_log:
+        step_log[date] += steps
+    else:
+        step_log[date] = steps
+    print(f"Step Log Updated: {step_log}")
+    talk(f'Logged {steps} steps for today.')
+
+def log_calories(meal, calories):
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    if date in calorie_log:
+        calorie_log[date] += calories
+    else:
+        calorie_log[date] = calories
+    print(f"Calorie Log Updated: {calorie_log}")
+    talk(f'Logged {calories} calories for {meal}.')
+
+def run_luna():
+    while True:
+        command = take_command()
+        print(command)
+        if 'play' in command:
+            song = command.replace('play', '').strip()
+            talk('playing ' + song)
+            pywhatkit.playonyt(song)
+        elif 'hello' in command or 'hi' in command:
+            talk('Hello, this is Luna.')
+        elif 'time' in command:
+            current_time = datetime.datetime.now().strftime('%I:%M %p')
+            talk('Current time is ' + current_time)
+        elif 'tell me about' in command:
+            person = command.replace('tell me about', '').strip()
+            info = wikipedia.summary(person, sentences=2)
+            print(info)
+            talk(info)
+        elif 'date' in command:
+            talk('Sorry, I have a headache.')
+        elif 'are you single' in command:
+            talk('I am in a relationship with wifi.')
+        elif 'joke' in command:
+            talk(pyjokes.get_joke())
+        elif 'health tip' in command:
+            tip = random.choice(health_tips)
+            talk(tip)
+        elif 'log exercise' in command:
+            try:
+                activity = command.split('log exercise ')[1].split(' for ')[0].strip()
+                duration = int(command.split(' for ')[1].split(' minutes')[0].strip())
+                log_exercise(activity, duration)
+            except Exception as e:
+                print(f"Error logging exercise: {e}")
+                talk('I could not understand the exercise activity or duration.')
+        elif 'exercise log' in command:
+            if exercise_log:
+                log_summary = 'You have logged the following exercises: '
+                for activity, duration in exercise_log.items():
+                    log_summary += f'{activity} for {duration} minutes, '
+                talk(log_summary.strip(', '))
+            else:
+                talk('No exercises logged yet.')
+        elif 'drink water' in command:
+            log_water()
+        elif 'step count' in command:
+            try:
+                steps = int(command.split('step count ')[1].split(' steps')[0].strip())
+                log_steps(steps)
+            except Exception as e:
+                print(f"Error logging steps: {e}")
+                talk('I could not understand the number of steps.')
+        elif 'log meal' in command:
+            try:
+                meal = command.split('log meal ')[1].split(' with ')[0].strip()
+                calories = int(command.split(' with ')[1].split(' calories')[0].strip())
+                log_calories(meal, calories)
+            except Exception as e:
+                print(f"Error logging meal: {e}")
+                talk('I could not understand the meal or calories.')
+        elif 'daily summary' in command:
+            summary = 'Here is your daily health summary: '
+            date = datetime.datetime.now().strftime('%Y-%m-%d')
+            if date in step_log:
+                summary += f'Steps taken: {step_log[date]}. '
+            if date in calorie_log:
+                summary += f'Calories consumed: {calorie_log[date]}. '
+            if exercise_log:
+                summary += 'Exercises logged: '
+                for activity, duration in exercise_log.items():
+                    summary += f'{activity} for {duration} minutes. '
+            if not (date in step_log or date in calorie_log or exercise_log):
+                summary = 'No health data logged for today.'
+            talk(summary.strip())
+        elif 'motivation' in command:
+            quote = random.choice(motivation_quotes)
+            talk(quote)
+        elif 'fun fact' in command:
+            fact = random.choice(fun_facts)
+            talk(fact)
+        elif 'stretching exercise' in command:
+            stretch = random.choice(stretching_exercises)
+            talk(stretch)
+        elif 'meditation guide' in command:
+            talk("Let's do a quick meditation. Sit comfortably and close your eyes. Take a deep breath in... and out... Focus on your breathing and let go of any tension. Continue this for a few minutes.")
+            time.sleep(60)
+            talk("Great job! You've completed a quick meditation session.")
+        elif 'stop' in command:
+            talk('Bye, have a nice day!')
+            break
+        else:
+            talk('Please say the command again.')
+
+run_luna()
+
+
