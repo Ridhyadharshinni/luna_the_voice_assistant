@@ -26,9 +26,7 @@ Luna-Voice-Assistant/
 
 **Installation**
 **Clone the repository**
-git clone https://github.com/yourusername/Luna-Voice-Assistant.git
-**Navigate to the project folder**
-cd Luna-Voice-Assistant
+https://github.com/Ridhyadharshinni/luna_the_voice_assistant.git
 **Install dependencies** 
 pip install SpeechRecognition
 pip install pyttsx3
